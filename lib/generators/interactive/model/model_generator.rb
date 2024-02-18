@@ -19,6 +19,20 @@ module Interactive
       model_name = prompt.ask("\nWhat is the great name of your model?", required: true) { |q| q.modify :remove }
       cmd << model_name
 
+      if prompt.select("\nSkip migration?", boolean_choices)
+        cmd << "--no-migration"
+      else
+        cmd += select_columns_configuration
+        cmd << "--no-timestamps" if prompt.select("\nSkip created_at, updated_at timestamps?", boolean_choices)
+        cmd << "--no-indexes" if prompt.select("\nSkip indexes?", boolean_choices)
+      end
+
+      run cmd.join(" ")
+    end
+
+    private
+
+    def select_columns_configuration
       columns = []
       while prompt.select("\nWould you like to add model attributes(columns)?", boolean_choices)
 
@@ -59,12 +73,7 @@ module Interactive
 
         columns << [column_name, column_type, index_option].compact.join(':')
       end
-      cmd += columns
-
-      cmd << "--no-migration" if prompt.select("\nSkip migration?", boolean_choices)
-      cmd << "--no-timestamps" if prompt.select("\nSkip created_at, updated_at timestamps?", boolean_choices)
-      cmd << "--no-indexes" if prompt.select("\nSkip indexes?", boolean_choices)
-      run cmd.join(" ")
+      columns
     end
   end
 end
